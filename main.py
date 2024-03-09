@@ -13,7 +13,6 @@ from pricingInfo import PricingInfo
 from service import Service
 from sku import Sku
 from tieredRates import TieredRates
-from unitPrice import UnitPrice
 
 
 async def main():
@@ -22,7 +21,7 @@ async def main():
     services = await get_services_gpc(client)
     services_to_json(services)
 
-    # first or default(None)
+    # first or default (None)
     # get Compute Engine (6F81-5844-456A) service of GCP
     services_computer = next(
         (
@@ -33,12 +32,19 @@ async def main():
         None,
     )
 
+    if services_computer is None:
+        print("Service Compute Engine (6F81-5844-456A) not found")
+        return
+
     print("Obtained service:", services_computer.name)
 
     skus = await get_skus_gpc(
         client, billing_v1.ListSkusRequest(parent=services_computer.name)
     )
     skus_to_json(skus)
+    # # filter skus by regions southamerica
+    # skus_southamerica = list(filter(lambda sku: "southamerica-east1" in sku.geo_taxonomy.regions or "southamerica-east1" in sku.service_regions , skus))
+    # skus_to_json(skus_southamerica)
 
 
 async def get_services_gpc(client: billing_v1.CloudBillingAsyncClient) -> List[Service]:
