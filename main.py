@@ -1,5 +1,4 @@
 import os
-from google.protobuf.timestamp_pb2 import Timestamp
 from datetime import datetime
 from typing import List
 from google.cloud import billing_v1
@@ -39,12 +38,19 @@ async def main():
     print("Obtained service:", services_computer.name)
 
     skus = await get_skus_gpc(
-        client, billing_v1.ListSkusRequest(parent=services_computer.name)
+        client,
+        billing_v1.ListSkusRequest(parent=services_computer.name, currency_code="BRL"),
     )
     skus_to_json(skus)
-    # # filter skus by regions southamerica
-    # skus_southamerica = list(filter(lambda sku: "southamerica-east1" in sku.geo_taxonomy.regions or "southamerica-east1" in sku.service_regions , skus))
-    # skus_to_json(skus_southamerica)
+    # filter skus by regions southamerica
+    skus_southamerica = list(
+        filter(
+            lambda sku: "southamerica-east1" in sku.geo_taxonomy.regions
+            or "southamerica-east1" in sku.service_regions,
+            skus,
+        )
+    )
+    skus_to_json(skus_southamerica, "skus_southamerica")
 
 
 async def get_services_gpc(client: billing_v1.CloudBillingAsyncClient) -> List[Service]:
@@ -130,7 +136,7 @@ async def get_skus_gpc(
         print("Exception when calling CloudBillingClient.list_skus: %s\n" % e)
 
 
-def skus_to_json(skus: List[Sku]) -> None:
+def skus_to_json(skus: List[Sku], name_file: str = "skus") -> None:
     skus_data = []
     for sku in skus:
         skus_data.append(
@@ -182,7 +188,7 @@ def skus_to_json(skus: List[Sku]) -> None:
             }
         )
 
-    create_json("skus", skus_data)
+    create_json(name_file, skus_data)
 
 
 def create_json(name_file: str, list: list) -> None:
